@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kitap Mağazası</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>📚 Kitap Mağazası</h1>
+        <div class="nav-links">
+    <a href="#" onclick="showBooks()">Ürünler</a>
+    <a href="#" onclick="showCart()">Sepet</a>
+    <span id="user-info" style="display: none;">
+        <span id="username"></span>
+        <a href="#" onclick="logout()">Çıkış</a>
+    </span>
+    <a href="#" id="login-link" onclick="showLogin()">Giriş</a>
+</div>
+    </header>
+
+    <main>
+        <!-- Kitaplar burada gösterilecek -->
+        <div id="books-container">
+            <p>Kitaplar yükleniyor...</p>
+        </div>
+
+        <!-- Sepet -->
+        <div id="cart-section" style="display: none;">
+            <h2>Sepetiniz</h2>
+            <div id="cart-items"></div>
+            <div id="cart-total">Toplam: 0 TL</div>
+        </div>
+         <div id="auth-section" style="display: none;">
+        <div class="auth-container">
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showLoginForm()">Giriş</button>
+                <button class="tab-btn" onclick="showRegisterForm()">Kayıt</button>
+            </div>
+            
+            <!-- Giriş Formu -->
+            <form id="login-form" class="auth-form">
+                <h2>Giriş Yap</h2>
+                <input type="text" id="login-username" placeholder="Kullanıcı Adı" required>
+                <input type="password" id="login-password" placeholder="Şifre" required>
+                <button type="submit">Giriş Yap</button>
+            </form>
+            
+            <!-- Kayıt Formu -->
+            <form id="register-form" class="auth-form" style="display: none;">
+                <h2>Kayıt Ol</h2>
+                <input type="text" id="register-username" placeholder="Kullanıcı Adı" required>
+                <input type="email" id="register-email" placeholder="Email" required>
+                <input type="text" id="register-firstname" placeholder="Ad">
+                <input type="text" id="register-lastname" placeholder="Soyad">
+                <input type="password" id="register-password" placeholder="Şifre" required>
+                <input type="password" id="register-password-confirm" placeholder="Şifre Tekrar" required>
+                <button type="submit">Kayıt Ol</button>
+            </form>
+        </div>
+    </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
