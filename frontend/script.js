@@ -101,9 +101,11 @@ function checkUserStatus() {
     if (isLoggedIn()) {
         showUserInfo();
         updateFooterLinks();
-        checkSellerStatus(); // Satıcı durumunu da kontrol et
+        checkSellerStatus();
+        setupSearchSystem(); // Arama sistemini kur
     } else {
         updateFooterLinks();
+        setupSearchSystem(); // Arama sistemini kur
     }
 }
 
@@ -266,11 +268,14 @@ function displayBooks(books) {
             buttonContent = `<button class="add-to-cart-btn" onclick="addToCart(${book.id})">Sepete Ekle</button>`;
         }
         
+        const sellerInfo = book.seller_name ? `<div class="seller-info">Satıcı: ${book.seller_name}</div>` : '';
+
         bookCard.innerHTML = `
             <div class="book-title">${book.title}</div>
             <div class="book-author">Yazar: ${book.author}</div>
             <div class="book-price">${book.price} TL</div>
             <p>${book.description}</p>
+            ${sellerInfo}
             ${stockWarning}
             ${buttonContent}
         `;
@@ -649,7 +654,7 @@ function logout() {
 }
 
 function hideAllSections() {
-    const sections = ['books-container', 'cart-section', 'auth-section', 'checkout-section', 'orders-section', 'profile-section', 'become-seller-section', 'seller-dashboard-section', 'add-product-section'];
+    const sections = ['books-container', 'cart-section', 'auth-section', 'checkout-section', 'orders-section', 'profile-section', 'become-seller-section', 'seller-dashboard-section', 'add-product-section', 'search-results-section'];
     sections.forEach(sectionId => {
         const element = document.getElementById(sectionId);
         if (element) {
@@ -1347,3 +1352,297 @@ async function deleteProduct(bookId) {
 function editProduct(bookId) {
     alert('Ürün düzenleme özelliği yakında eklenecek!');
 }
+
+// Arama değişkenleri
+let currentSearchQuery = '';
+let currentFilters = {};
+let currentPage = 1;
+let searchTimeout = null;
+
+// Arama sistemi kurulumu
+function setupSearchSystem() {
+    const searchInput = document.getElementById('search-input');
+    const searchBtn = document.getElementById('search-btn');
+    
+    if (searchInput) {
+        // Anlık arama önerileri
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    loadSearchSuggestions(query);
+                }, 300);
+            } else {
+                hideSuggestions();
+            }
+        });
+        
+        // Enter tuşu ile arama
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performSearch();
+            }
+        });
+        
+        // Focus çıkınca önerileri gizle (biraz gecikme ile)
+        searchInput.addEventListener('blur', function() {
+            setTimeout(hideSuggestions, 200);
+        });
+    }
+    
+    // Filtre değişikliklerini dinle
+    const filterInputs = ['min-price', 'max-price', 'in-stock-only', 'sort-by'];
+    filterInputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', applyFilters);
+        }
+    });
+}
+
+// Arama önerilerini yükle
+async function loadSearchSuggestions(query) {
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/api/search/suggestions/?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+        
+        displaySuggestions(data.suggestions);
+    } catch (error) {
+        console.error('Öneriler yüklenemedi:', error);
+    }
+}
+
+// Önerileri göster
+function displaySuggestions(suggestions) {
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    
+    if (suggestions.length === 0) {
+        hideSuggestions();
+        return;
+    }
+    
+    suggestionsContainer.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        suggestionItem.textContent = suggestion;
+        suggestionItem.addEventListener('click', () => {
+            document.getElementById('search-input').value = suggestion;
+            hideSuggestions();
+            performSearch();
+        });
+        suggestionsContainer.appendChild(suggestionItem);
+    });
+    
+    suggestionsContainer.style.display = 'block';
+}
+
+// Önerileri gizle
+function hideSuggestions() {
+    const suggestionsContainer = document.getElementById('search-suggestions');
+    if (suggestionsContainer) {
+        suggestionsContainer.style.display = 'none';
+    }
+}
+
+// Arama yap
+function performSearch() {
+    const query = document.getElementById('search-input').value.trim();
+    currentSearchQuery = query;
+    currentPage = 1;
+    
+    if (query.length === 0) {
+        clearSearch();
+        return;
+    }
+    
+    hideSuggestions();
+    hideAllSections();
+    
+    const searchSection = document.getElementById('search-results-section');
+    if (searchSection) {
+        searchSection.style.display = 'block';
+        loadSearchResults();
+    }
+}
+
+// Arama sonuçlarını yükle
+async function loadSearchResults(append = false) {
+    try {
+        // Filtrelerileri al
+        const minPrice = document.getElementById('min-price')?.value || '';
+        const maxPrice = document.getElementById('max-price')?.value || '';
+        const inStockOnly = document.getElementById('in-stock-only')?.checked || false;
+        const sortBy = document.getElementById('sort-by')?.value || 'newest';
+        
+        // URL oluştur
+        const params = new URLSearchParams({
+            q: currentSearchQuery,
+            page: currentPage,
+            sort: sortBy
+        });
+        
+        if (minPrice) params.append('min_price', minPrice);
+        if (maxPrice) params.append('max_price', maxPrice);
+        if (inStockOnly) params.append('in_stock', 'true');
+        
+        const response = await fetch(`http://127.0.0.1:8000/api/search/?${params}`);
+        const data = await response.json();
+        
+        displaySearchResults(data, append);
+    } catch (error) {
+        console.error('Arama sonuçları yüklenemedi:', error);
+        document.getElementById('search-results-container').innerHTML = 
+            '<p class="error">Arama sonuçları yüklenirken hata oluştu.</p>';
+    }
+}
+
+// Arama sonuçlarını göster
+function displaySearchResults(data, append = false) {
+    const container = document.getElementById('search-results-container');
+    const infoContainer = document.getElementById('search-info');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const titleContainer = document.getElementById('search-results-title');
+    
+    // Başlık güncelle
+    if (titleContainer) {
+        if (currentSearchQuery) {
+            titleContainer.textContent = `"${currentSearchQuery}" için arama sonuçları`;
+        } else {
+            titleContainer.textContent = 'Filtrelenmiş sonuçlar';
+        }
+    }
+    
+    // Bilgi göster
+    if (infoContainer) {
+        infoContainer.textContent = `${data.total_count} sonuç bulundu`;
+    }
+    
+    // Sonuçları göster
+    if (!append) {
+        container.innerHTML = '';
+    }
+    
+    if (data.results.length === 0 && !append) {
+        container.innerHTML = '<p class="no-results">Arama kriterlerinize uygun sonuç bulunamadı.</p>';
+        loadMoreContainer.style.display = 'none';
+        return;
+    }
+    
+    // Kitap kartları oluştur
+    data.results.forEach(book => {
+        const bookCard = createBookCard(book);
+        container.appendChild(bookCard);
+    });
+    
+    // Daha fazla yükle butonu
+    if (data.has_more) {
+        loadMoreContainer.style.display = 'block';
+    } else {
+        loadMoreContainer.style.display = 'none';
+    }
+}
+
+// Kitap kartı oluştur (displayBooks'taki ile aynı mantık)
+function createBookCard(book) {
+    const bookCard = document.createElement('div');
+    bookCard.className = 'book-card';
+    
+    // Stok durumu kontrolü
+    const isOutOfStock = book.stock <= 0;
+    const isLowStock = book.stock > 0 && book.stock <= 3;
+    const isVeryLowStock = book.stock === 1;
+    
+    let stockWarning = '';
+    let buttonContent = '';
+    
+    if (isOutOfStock) {
+        stockWarning = '<div class="stock-warning out-of-stock">❌ Stokta Yok</div>';
+        buttonContent = '<button class="add-to-cart-btn disabled" disabled>Stokta Yok</button>';
+    } else if (isVeryLowStock) {
+        stockWarning = '<div class="stock-warning very-low-stock">🔥 Son 1 adet!</div>';
+        buttonContent = `<button class="add-to-cart-btn urgent" onclick="addToCart(${book.id})">Hemen Al!</button>`;
+    } else if (isLowStock) {
+        stockWarning = '<div class="stock-warning low-stock">⚡ Tükenmek Üzere!</div>';
+        buttonContent = `<button class="add-to-cart-btn" onclick="addToCart(${book.id})">Sepete Ekle</button>`;
+    } else {
+        stockWarning = '<div class="stock-info">✅ Stokta Mevcut</div>';
+        buttonContent = `<button class="add-to-cart-btn" onclick="addToCart(${book.id})">Sepete Ekle</button>`;
+    }
+    
+    // Satıcı bilgisi
+    const sellerInfo = book.seller_name ? `<div class="seller-info">Satıcı: ${book.seller_name}</div>` : '';
+    
+    bookCard.innerHTML = `
+        <div class="book-title">${book.title}</div>
+        <div class="book-author">Yazar: ${book.author}</div>
+        <div class="book-price">${book.price} TL</div>
+        <p>${book.description}</p>
+        ${sellerInfo}
+        ${stockWarning}
+        ${buttonContent}
+    `;
+    
+    if (isOutOfStock) {
+        bookCard.classList.add('out-of-stock-card');
+    } else if (isVeryLowStock) {
+        bookCard.classList.add('urgent-stock-card');
+    }
+    
+    return bookCard;
+}
+
+// Filtreleri uygula
+function applyFilters() {
+    currentPage = 1;
+    loadSearchResults();
+}
+
+// Daha fazla sonuç yükle
+function loadMoreResults() {
+    currentPage++;
+    loadSearchResults(true);
+}
+
+// Aramayı temizle
+function clearSearch() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('min-price').value = '';
+    document.getElementById('max-price').value = '';
+    document.getElementById('in-stock-only').checked = false;
+    document.getElementById('sort-by').value = 'newest';
+    
+    currentSearchQuery = '';
+    currentPage = 1;
+    
+    showBooks();
+}
+
+// Satıcı bilgisi stili ekle
+const sellerInfoStyle = `
+.seller-info {
+    color: #666;
+    font-size: 14px;
+    margin: 5px 0;
+    font-style: italic;
+}
+
+.no-results {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 1.2rem;
+    padding: 50px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+`;
+
+// Stil ekle
+const styleSheet = document.createElement('style');
+styleSheet.textContent = sellerInfoStyle;
+document.head.appendChild(styleSheet);

@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, OrderSerializer, CreateOrderSerializer, OrderItemSerializer
 from rest_framework import status
 from django.db import transaction
+from django.db.models import Q
 
 @api_view(['GET'])
 def get_books(request):
@@ -329,3 +330,108 @@ def delete_book(request, pk):
         return Response({'error': 'Satıcı hesabınız bulunamadı!'}, status=404)
     except Book.DoesNotExist:
         return Response({'error': 'Ürün bulunamadı!'}, status=404)    
+    
+@api_view(['GET'])
+def search_books(request):
+    """Kitap arama"""
+    query = request.GET.get('q', '').strip()
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    in_stock_only = request.GET.get('in_stock', 'false').lower() == 'true'
+    sort_by = request.GET.get('sort', 'newest')  # newest, oldest, price_low, price_high, name
+    
+    # Başlangıç sorgusu - sadece aktif kitaplar
+    books = Book.objects.filter(is_active=True)
+    
+    # Metin araması (kitap adı ve yazar)
+    if query:
+        books = books.filter(
+            Q(title__icontains=query) | 
+            Q(author__icontains=query) |
+            Q(description__icontains=query)
+        )
+    
+    # Fiyat filtresi
+    if min_price:
+        try:
+            books = books.filter(price__gte=float(min_price))
+        except ValueError:
+            pass
+    
+    if max_price:
+        try:
+            books = books.filter(price__lte=float(max_price))
+        except ValueError:
+            pass
+    
+    # Stok filtresi
+    if in_stock_only:
+        books = books.filter(stock__gt=0)
+    
+    # Sıralama
+    if sort_by == 'oldest':
+        books = books.order_by('created_at')
+    elif sort_by == 'price_low':
+        books = books.order_by('price')
+    elif sort_by == 'price_high':
+        books = books.order_by('-price')
+    elif sort_by == 'name':
+        books = books.order_by('title')
+    else:  # newest (default)
+        books = books.order_by('-created_at')
+    
+    # Sonuç sayısı
+    total_count = books.count()
+    
+    # Sayfalama (isteğe bağlı)
+    page_size = 20
+    page = request.GET.get('page', 1)
+    try:
+        page = int(page)
+        start = (page - 1) * page_size
+        end = start + page_size
+        books = books[start:end]
+    except ValueError:
+        page = 1
+        books = books[:page_size]
+    
+    serializer = BookSerializer(books, many=True)
+    
+    return Response({
+        'results': serializer.data,
+        'total_count': total_count,
+        'query': query,
+        'filters': {
+            'min_price': min_price,
+            'max_price': max_price,
+            'in_stock_only': in_stock_only,
+            'sort_by': sort_by
+        },
+        'page': page,
+        'has_more': total_count > page * page_size
+    })
+
+@api_view(['GET'])
+def get_search_suggestions(request):
+    """Arama önerileri"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return Response({'suggestions': []})
+    
+    # Kitap adları ve yazarlar için öneriler
+    book_titles = Book.objects.filter(
+        is_active=True,
+        title__icontains=query
+    ).values_list('title', flat=True)[:5]
+    
+    authors = Book.objects.filter(
+        is_active=True,
+        author__icontains=query
+    ).values_list('author', flat=True).distinct()[:5]
+    
+    suggestions = list(book_titles) + list(authors)
+    
+    return Response({
+        'suggestions': suggestions[:8]  # Max 8 öneri
+    })    

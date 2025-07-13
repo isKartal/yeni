@@ -28,6 +28,10 @@ urlpatterns = [
     path('seller/books/<int:pk>/update/', views.update_book, name='update_book'),
     path('seller/books/<int:pk>/delete/', views.delete_book, name='delete_book'),
 
+    # Arama API'leri
+    path('search/', views.search_books, name='search_books'),
+    path('search/suggestions/', views.get_search_suggestions, name='search_suggestions'),
+
      # JWT Token URLs
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
