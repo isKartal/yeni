@@ -100,9 +100,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function checkUserStatus() {
     if (isLoggedIn()) {
         showUserInfo();
-        updateFooterLinks(); // Footer'ı da güncelle
+        updateFooterLinks();
+        checkSellerStatus(); // Satıcı durumunu da kontrol et
     } else {
-        updateFooterLinks(); // Footer'ı güncelle
+        updateFooterLinks();
     }
 }
 
@@ -286,31 +287,64 @@ function displayBooks(books) {
 
 // Sepete kitap ekle
 function addToCart(bookId) {
-    // Önce kitap bilgilerini al
     fetch(`http://127.0.0.1:8000/api/books/${bookId}/`)
         .then(response => response.json())
         .then(book => {
+            // Stok kontrolü
+            if (book.stock <= 0) {
+                alert(`❌ Üzgünüz! ${book.title} şu anda stokta yok.`);
+                return;
+            }
+            
             // Sepette zaten var mı kontrol et
             const existingItem = cart.find(item => item.id === bookId);
             
             if (existingItem) {
+                // Sepetteki miktar + 1, stoktan fazla mı?
+                if (existingItem.quantity >= book.stock) {
+                    alert(`⚠️ ${book.title} için maksimum ${book.stock} adet sipariş verebilirsiniz!\n\nŞu anda sepetinizde ${existingItem.quantity} adet var.`);
+                    return;
+                }
                 existingItem.quantity++;
+                
+                // Müşteri dostu stok mesajları
+                if (existingItem.quantity === book.stock) {
+                    alert(`✅ ${book.title} sepete eklendi!\n🔥 Bu ürünün son adedini de aldınız!`);
+                } else if (book.stock - existingItem.quantity === 1) {
+                    alert(`✅ ${book.title} sepete eklendi!\n⚡ Bu üründen sadece 1 adet daha alabilirsiniz!`);
+                } else if (book.stock - existingItem.quantity <= 2) {
+                    alert(`✅ ${book.title} sepete eklendi!\n⚡ Bu ürün tükenmek üzere!`);
+                } else {
+                    alert(`✅ ${book.title} sepete eklendi!\nSepetinizde: ${existingItem.quantity} adet`);
+                }
             } else {
                 cart.push({
                     id: book.id,
                     title: book.title,
                     author: book.author,
                     price: book.price,
-                    quantity: 1
+                    quantity: 1,
+                    stock: book.stock // Stok bilgisini de saklayalım
                 });
+                
+                // Müşteri dostu stok mesajları
+                if (book.stock === 1) {
+                    alert(`✅ ${book.title} sepete eklendi!\n🔥 Bu ürünün son adedini aldınız!`);
+                } else if (book.stock === 2) {
+                    alert(`✅ ${book.title} sepete eklendi!\n⚡ Bu üründen sadece 1 adet daha kaldı!`);
+                } else if (book.stock <= 3) {
+                    alert(`✅ ${book.title} sepete eklendi!\n⚡ Bu ürün tükenmek üzere!`);
+                } else {
+                    alert(`✅ ${book.title} sepete eklendi!`);
+                }
             }
             
             updateCartDisplay();
-            alert(`${book.title} sepete eklendi!`);
+            loadBooks(); // Kitap listesini yenile (stok durumları güncellensin)
         })
         .catch(error => {
             console.error('Sepete eklenemedi:', error);
-            alert('Bir hata oluştu!');
+            alert('❌ Bir hata oluştu! Lütfen tekrar deneyin.');
         });
 }
 
@@ -615,7 +649,7 @@ function logout() {
 }
 
 function hideAllSections() {
-    const sections = ['books-container', 'cart-section', 'auth-section', 'checkout-section', 'orders-section', 'profile-section'];
+    const sections = ['books-container', 'cart-section', 'auth-section', 'checkout-section', 'orders-section', 'profile-section', 'become-seller-section', 'seller-dashboard-section', 'add-product-section'];
     sections.forEach(sectionId => {
         const element = document.getElementById(sectionId);
         if (element) {
@@ -623,7 +657,6 @@ function hideAllSections() {
         }
     });
     
-    // İçerikleri de temizle
     clearSectionContents();
 }
 
@@ -750,21 +783,46 @@ function setupCheckoutForm() {
 async function handleCheckoutSubmit(e) {
     e.preventDefault();
     
-    const shippingAddress = document.getElementById('shipping-address').value;
-    const phone = document.getElementById('phone').value;
+    const shippingAddress = document.getElementById('shipping-address').value.trim();
+    const phone = document.getElementById('phone').value.trim();
     
-    if (!shippingAddress || !phone) {
-        alert('Lütfen tüm alanları doldurun!');
+    // Validation
+    if (!shippingAddress || shippingAddress.length < 10) {
+        alert('Lütfen geçerli bir teslimat adresi giriniz! (En az 10 karakter)');
         return;
     }
     
-    // Sepet verilerini sipariş formatına çevir
-    const cartItems = cart.map(item => ({
-        book_id: item.id.toString(),
-        quantity: item.quantity.toString()
-    }));
+    if (!phone || phone.length < 10) {
+        alert('Lütfen geçerli bir telefon numarası giriniz!');
+        return;
+    }
+    
+    // Telefon numarası formatı kontrolü
+    const phonePattern = /^(\+90|0)?[5][0-9]{2}[0-9]{3}[0-9]{4}$/;
+    const cleanedPhone = phone.replace(/[\s\-\(\)]/g, '');
+    
+    if (!phonePattern.test(cleanedPhone)) {
+        alert('Lütfen geçerli bir Türkiye telefon numarası giriniz!\nÖrnek: 0555 123 45 67');
+        return;
+    }
+    
+    if (cart.length === 0) {
+        alert('Sepetiniz boş!');
+        return;
+    }
+    
+    // Loading göster
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'İşleniyor...';
+    submitBtn.disabled = true;
     
     try {
+        const cartItems = cart.map(item => ({
+            book_id: item.id.toString(),
+            quantity: item.quantity.toString()
+        }));
+        
         const response = await fetch('http://127.0.0.1:8000/api/orders/create/', {
             method: 'POST',
             headers: {
@@ -773,7 +831,7 @@ async function handleCheckoutSubmit(e) {
             },
             body: JSON.stringify({
                 shipping_address: shippingAddress,
-                phone: phone,
+                phone: cleanedPhone,
                 cart_items: cartItems
             })
         });
@@ -781,16 +839,27 @@ async function handleCheckoutSubmit(e) {
         const data = await response.json();
         
         if (response.ok) {
-            alert('Sipariş başarıyla oluşturuldu!');
+            alert('Sipariş başarıyla oluşturuldu! Sipariş numaranız: #' + data.order.id);
             cart = []; // Sepeti temizle
             updateCartDisplay();
-            showOrders(); // Siparişlere git
+            
+            // Formu temizle
+            document.getElementById('checkout-form').reset();
+            
+            // 2 saniye sonra siparişlere yönlendir
+            setTimeout(() => {
+                showOrders();
+            }, 2000);
         } else {
             alert('Hata: ' + (data.error || 'Sipariş oluşturulamadı'));
         }
     } catch (error) {
         console.error('Order creation error:', error);
-        alert('Bağlantı hatası!');
+        alert('Bağlantı hatası! Lütfen tekrar deneyin.');
+    } finally {
+        // Loading'i kaldır
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
     }
 }
 
@@ -815,7 +884,6 @@ async function loadUserOrders() {
         });
         
         console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
             if (response.status === 401) {
@@ -848,24 +916,40 @@ async function loadUserOrders() {
 }
 
 function displayOrders(orders) {
+    console.log('displayOrders çağrıldı, orders:', orders);
+    console.log('Orders array uzunluğu:', orders.length);
+    
     const ordersList = document.getElementById('orders-list');
-    if (!ordersList) return;
+    if (!ordersList) {
+        console.error('orders-list elementi bulunamadı!');
+        return;
+    }
     
     if (orders.length === 0) {
-        ordersList.innerHTML = '<p>Henüz sipariş vermediniz.</p>';
+        ordersList.innerHTML = '<p class="no-orders">Henüz sipariş vermediniz.</p>';
         return;
     }
     
     ordersList.innerHTML = '';
     
-    orders.forEach(order => {
+    orders.forEach((order, index) => {
+        console.log(`Sipariş ${index + 1}:`, order);
+        console.log(`Sipariş ID: ${order.id}, Durum: ${order.status}`);
+        
         const orderDiv = document.createElement('div');
         orderDiv.className = 'order-card';
         
         const statusText = getStatusText(order.status);
         const orderDate = new Date(order.created_at).toLocaleDateString('tr-TR');
         
-        orderDiv.innerHTML = `
+        // Debug için console'a yazdır
+        console.log('Sipariş:', order.id, 'Durum:', order.status, 'İptal edilebilir mi:', order.status === 'pending');
+        
+        // İptal butonunu göster/gizle
+        const canCancel = order.status === 'pending';
+        
+        // HTML içeriğini oluştur
+        const orderHTML = `
             <div class="order-header">
                 <h3>Sipariş #${order.id}</h3>
                 <span class="order-status status-${order.status}">${statusText}</span>
@@ -877,21 +961,46 @@ function displayOrders(orders) {
             </div>
             <div class="order-items">
                 <h4>Sipariş İçeriği:</h4>
-                ${order.items.map(item => `
+                ${order.items && order.items.length > 0 ? order.items.map(item => `
                     <div class="order-item">
-                        <span>${item.book_title} (${item.book_author})</span>
-                        <span>${item.quantity} × ${item.price} TL</span>
+                        <span>${item.book_title || 'Bilinmeyen Kitap'} (${item.book_author || 'Bilinmeyen Yazar'})</span>
+                        <span>${item.quantity} × ${item.price} TL = ${item.total_price || (item.quantity * item.price)} TL</span>
                     </div>
-                `).join('')}
+                `).join('') : '<p>Sipariş detayları yüklenemedi</p>'}
             </div>
             <div class="order-address">
-                <p><strong>Teslimat Adresi:</strong> ${order.shipping_address}</p>
-                <p><strong>Telefon:</strong> ${order.phone}</p>
+                <p><strong>Teslimat Adresi:</strong> ${order.shipping_address || 'Belirtilmemiş'}</p>
+                <p><strong>Telefon:</strong> ${order.phone || 'Belirtilmemiş'}</p>
             </div>
+            ${canCancel ? `
+                <div class="order-actions">
+                    <button onclick="cancelOrder(${order.id})" class="cancel-btn">
+                        🗑️ Siparişi İptal Et
+                    </button>
+                    <small class="cancel-note">* Sadece beklemedeki siparişler iptal edilebilir</small>
+                </div>
+            ` : `
+                <div class="order-actions">
+                    <p class="no-cancel-info">
+                        ${order.status === 'cancelled' ? '❌ Bu sipariş zaten iptal edilmiş.' : 
+                          order.status === 'delivered' ? '✅ Bu sipariş teslim edilmiş.' :
+                          order.status === 'shipped' ? '🚚 Bu sipariş kargoya verilmiş, iptal edilemez.' :
+                          '⏳ Bu sipariş artık iptal edilemez.'}
+                    </p>
+                </div>
+            `}
         `;
         
+        console.log(`Sipariş ${order.id} HTML oluşturuluyor...`);
+        orderDiv.innerHTML = orderHTML;
+        
+        console.log(`Sipariş ${order.id} DOM'a ekleniyor...`);
         ordersList.appendChild(orderDiv);
+        
+        console.log(`Sipariş ${order.id} başarıyla eklendi!`);
     });
+    
+    console.log('Tüm siparişler işlendi!');
 }
 
 function getStatusText(status) {
@@ -903,4 +1012,338 @@ function getStatusText(status) {
         'cancelled': 'İptal Edildi'
     };
     return statusMap[status] || status;
+}
+
+// Sipariş iptal fonksiyonu
+async function cancelOrder(orderId) {
+    console.log('İptal işlemi başlıyor, Sipariş ID:', orderId);
+    
+    if (!isLoggedIn()) {
+        alert('Giriş yapmanız gerekiyor!');
+        showLogin();
+        return;
+    }
+    
+    if (!confirm('Bu siparişi iptal etmek istediğinizden emin misiniz?\nİptal edilen siparişler geri alınamaz!')) {
+        return;
+    }
+    
+    try {
+        console.log('API çağrısı yapılıyor...');
+        
+        const response = await fetch(`http://127.0.0.1:8000/api/orders/${orderId}/cancel/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (response.ok) {
+            alert('✅ Sipariş başarıyla iptal edildi!\n💰 Ödeme iadesi 3-5 iş günü içinde hesabınıza yansıyacaktır.');
+            
+            // Siparişleri yeniden yükle
+            const ordersList = document.getElementById('orders-list');
+            if (ordersList) {
+                ordersList.innerHTML = '<p class="loading">Siparişler güncelleniyor...</p>';
+            }
+            loadUserOrders();
+        } else {
+            if (response.status === 401) {
+                alert('🔒 Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+                logout();
+            } else {
+                alert('❌ Hata: ' + (data.error || data.detail || 'Sipariş iptal edilemedi'));
+            }
+        }
+    } catch (error) {
+        console.error('Cancel order error:', error);
+        alert('🌐 Bağlantı hatası! Lütfen internet bağlantınızı kontrol edin.');
+    }
+}
+
+// Satıcı durumunu kontrol et
+function checkSellerStatus() {
+    if (!isLoggedIn()) return;
+    
+    fetch('http://127.0.0.1:8000/api/seller/profile/', {
+        headers: {
+            'Authorization': `Bearer ${getToken()}`
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('Satıcı değil');
+    })
+    .then(seller => {
+        // Satıcı ise menüyü güncelle
+        const sellerNav = document.getElementById('seller-nav');
+        const becomeSellerNav = document.getElementById('become-seller-nav');
+        if (sellerNav) sellerNav.style.display = 'inline';
+        if (becomeSellerNav) becomeSellerNav.style.display = 'none';
+        
+        // Satıcı bilgilerini sakla
+        localStorage.setItem('seller_info', JSON.stringify(seller));
+    })
+    .catch(() => {
+        // Satıcı değil, "Satıcı Ol" butonunu göster
+        const sellerNav = document.getElementById('seller-nav');
+        const becomeSellerNav = document.getElementById('become-seller-nav');
+        if (sellerNav) sellerNav.style.display = 'none';
+        if (becomeSellerNav) becomeSellerNav.style.display = 'inline';
+    });
+}
+
+// Satıcı ol sayfasını göster
+function showBecomeSeller() {
+    hideAllSections();
+    const becomeSellerSection = document.getElementById('become-seller-section');
+    if (becomeSellerSection) {
+        becomeSellerSection.style.display = 'block';
+        setupBecomeSellerForm();
+    }
+}
+
+// Satıcı panelini göster
+function showSellerDashboard() {
+    if (!isLoggedIn()) {
+        alert('Giriş yapmanız gerekiyor!');
+        showLogin();
+        return;
+    }
+    
+    hideAllSections();
+    const sellerDashboard = document.getElementById('seller-dashboard-section');
+    if (sellerDashboard) {
+        sellerDashboard.style.display = 'block';
+        loadSellerDashboard();
+    }
+}
+
+// Ürün ekleme sayfasını göster
+function showAddProduct() {
+    hideAllSections();
+    const addProductSection = document.getElementById('add-product-section');
+    if (addProductSection) {
+        addProductSection.style.display = 'block';
+        setupAddProductForm();
+    }
+}
+
+// Satıcı ol formunu ayarla
+function setupBecomeSellerForm() {
+    const form = document.getElementById('become-seller-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            store_name: document.getElementById('store-name').value.trim(),
+            description: document.getElementById('store-description').value.trim(),
+            phone: document.getElementById('seller-phone').value.trim(),
+            address: document.getElementById('seller-address').value.trim()
+        };
+        
+        // Validation
+        if (!formData.store_name || !formData.phone || !formData.address) {
+            alert('Lütfen zorunlu alanları doldurun!');
+            return;
+        }
+        
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/seller/become/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('🎉 Tebrikler! Satıcı hesabınız oluşturuldu!\n\nArtık ürün satabilirsiniz.');
+                localStorage.setItem('seller_info', JSON.stringify(data.seller));
+                checkSellerStatus(); // Menüyü güncelle
+                showSellerDashboard();
+            } else {
+                alert('Hata: ' + (data.error || 'Satıcı hesabı oluşturulamadı'));
+            }
+        } catch (error) {
+            alert('Bağlantı hatası!');
+        }
+    });
+}
+
+// Satıcı dashboard'unu yükle
+async function loadSellerDashboard() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/api/seller/profile/', {
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        
+        if (response.ok) {
+            const seller = await response.json();
+            document.getElementById('store-name-display').textContent = seller.store_name;
+            document.getElementById('total-products').textContent = seller.total_books;
+        }
+    } catch (error) {
+        console.error('Satıcı bilgileri yüklenemedi:', error);
+    }
+}
+
+// Ürünlerimi göster
+function showMyProducts() {
+    const productsList = document.getElementById('my-products-list');
+    if (productsList.style.display === 'none') {
+        productsList.style.display = 'block';
+        loadMyProducts();
+    } else {
+        productsList.style.display = 'none';
+    }
+}
+
+// Satıcının ürünlerini yükle
+async function loadMyProducts() {
+    try {
+        const response = await fetch('http://127.0.0.1:8000/api/seller/books/', {
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        
+        const books = await response.json();
+        displayMyProducts(books);
+    } catch (error) {
+        console.error('Ürünler yüklenemedi:', error);
+    }
+}
+
+// Satıcının ürünlerini göster
+function displayMyProducts(books) {
+    const container = document.getElementById('products-container');
+    
+    if (books.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Henüz ürün eklememişsiniz.</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    
+    books.forEach(book => {
+        const productCard = document.createElement('div');
+        productCard.className = 'seller-product-card';
+        productCard.innerHTML = `
+            <div class="product-info">
+                <div class="product-title">${book.title}</div>
+                <div class="product-details">
+                    Yazar: ${book.author} | Fiyat: ${book.price} TL | Stok: ${book.stock}
+                </div>
+            </div>
+            <div class="product-actions">
+                <button class="edit-btn" onclick="editProduct(${book.id})">Düzenle</button>
+                <button class="delete-btn" onclick="deleteProduct(${book.id})">Sil</button>
+            </div>
+        `;
+        container.appendChild(productCard);
+    });
+}
+
+// Ürün ekleme formunu ayarla
+function setupAddProductForm() {
+    const form = document.getElementById('add-product-form');
+    if (!form) return;
+    
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = {
+            title: document.getElementById('book-title').value.trim(),
+            author: document.getElementById('book-author').value.trim(),
+            price: parseFloat(document.getElementById('book-price').value),
+            stock: parseInt(document.getElementById('book-stock').value),
+            description: document.getElementById('book-description').value.trim()
+        };
+        
+        // Validation
+        if (!formData.title || !formData.author || !formData.description) {
+            alert('Lütfen tüm alanları doldurun!');
+            return;
+        }
+        
+        if (formData.price <= 0) {
+            alert('Fiyat 0\'dan büyük olmalıdır!');
+            return;
+        }
+        
+        if (formData.stock < 0) {
+            alert('Stok negatif olamaz!');
+            return;
+        }
+        
+        try {
+            const response = await fetch('http://127.0.0.1:8000/api/seller/books/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                alert('✅ Ürün başarıyla eklendi!');
+                form.reset();
+                showSellerDashboard();
+            } else {
+                alert('Hata: ' + (data.error || 'Ürün eklenemedi'));
+            }
+        } catch (error) {
+            alert('Bağlantı hatası!');
+        }
+    });
+}
+
+// Ürün sil
+async function deleteProduct(bookId) {
+    if (!confirm('Bu ürünü silmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`http://127.0.0.1:8000/api/seller/books/${bookId}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            alert('✅ Ürün silindi!');
+            loadMyProducts(); // Listeyi yenile
+            loadSellerDashboard(); // İstatistikleri güncelle
+        } else {
+            alert('Hata: ' + (data.error || 'Ürün silinemedi'));
+        }
+    } catch (error) {
+        alert('Bağlantı hatası!');
+    }
+}
+
+function editProduct(bookId) {
+    alert('Ürün düzenleme özelliği yakında eklenecek!');
 }

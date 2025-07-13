@@ -17,6 +17,12 @@
             <span id="user-info" style="display: none;">
                 <span id="username"></span>
                 <a href="#" onclick="showOrders()">Siparişlerim</a>
+                <span id="seller-nav" style="display: none;">
+                    <a href="#" onclick="showSellerDashboard()">Satıcı Panelim</a>
+                </span>
+                <span id="become-seller-nav">
+                    <a href="#" onclick="showBecomeSeller()">Satıcı Ol</a>
+                </span>
                 <a href="#" onclick="logout()">Çıkış</a>
             </span>
             <a href="#" id="login-link" onclick="showLogin()">Giriş</a>
@@ -104,6 +110,110 @@
                 <div id="orders-list">
                     <p>Siparişler yükleniyor...</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Satıcı Ol Formu -->
+        <div id="become-seller-section" style="display: none;">
+            <div class="seller-container">
+                <h2>Satıcı Ol</h2>
+                <p class="seller-description">
+                    Kendi kitaplarınızı satarak gelir elde edin! 
+                    Satıcı hesabınızı oluşturun ve hemen satış yapmaya başlayın.
+                </p>
+                <form id="become-seller-form" class="seller-form">
+                    <div class="form-group">
+                        <label for="store-name">Mağaza Adı *</label>
+                        <input type="text" id="store-name" placeholder="Örn: Ahmet'in Kitap Dünyası" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="store-description">Mağaza Açıklaması</label>
+                        <textarea id="store-description" placeholder="Mağazanız hakkında kısa bir açıklama yazın..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="seller-phone">Telefon Numarası *</label>
+                        <input type="tel" id="seller-phone" placeholder="0555 123 45 67" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="seller-address">Adres *</label>
+                        <textarea id="seller-address" placeholder="Tam adresinizi yazın..." rows="2" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="seller-btn">Satıcı Hesabı Oluştur</button>
+                        <button type="button" onclick="showBooks()" class="cancel-btn">İptal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Satıcı Paneli -->
+        <div id="seller-dashboard-section" style="display: none;">
+            <div class="seller-dashboard">
+                <h2>Satıcı Paneli</h2>
+                
+                <!-- Satıcı İstatistikleri -->
+                <div class="seller-stats">
+                    <div class="stat-card">
+                        <h3>Toplam Ürünler</h3>
+                        <span id="total-products">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Mağaza Adı</h3>
+                        <span id="store-name-display">-</span>
+                    </div>
+                </div>
+                
+                <!-- Satıcı Aksiyonları -->
+                <div class="seller-actions">
+                    <button onclick="showAddProduct()" class="seller-btn">
+                        ➕ Yeni Ürün Ekle
+                    </button>
+                    <button onclick="showMyProducts()" class="seller-btn secondary">
+                        📚 Ürünlerim
+                    </button>
+                    <button onclick="showBooks()" class="seller-btn tertiary">
+                        🏠 Ana Sayfaya Dön
+                    </button>
+                </div>
+                
+                <!-- Ürün Listesi -->
+                <div id="my-products-list" style="display: none;">
+                    <h3>Ürünlerim</h3>
+                    <div id="products-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ürün Ekleme Formu -->
+        <div id="add-product-section" style="display: none;">
+            <div class="product-container">
+                <h2>Yeni Ürün Ekle</h2>
+                <form id="add-product-form" class="product-form">
+                    <div class="form-group">
+                        <label for="book-title">Kitap Adı *</label>
+                        <input type="text" id="book-title" placeholder="Örn: Suç ve Ceza" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="book-author">Yazar *</label>
+                        <input type="text" id="book-author" placeholder="Örn: Dostoyevski" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="book-price">Fiyat (TL) *</label>
+                        <input type="number" id="book-price" placeholder="25.50" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="book-stock">Stok Adedi *</label>
+                        <input type="number" id="book-stock" placeholder="10" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="book-description">Açıklama *</label>
+                        <textarea id="book-description" placeholder="Kitap hakkında detaylı açıklama..." rows="4" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="seller-btn">Ürünü Ekle</button>
+                        <button type="button" onclick="showSellerDashboard()" class="cancel-btn">İptal</button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>

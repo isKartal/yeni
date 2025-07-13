@@ -3,7 +3,7 @@ from .models import Book
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import serializers
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Seller
 
 class BookSerializer(serializers.ModelSerializer):
     class Meta:
@@ -103,3 +103,45 @@ class CreateOrderSerializer(serializers.Serializer):
         if not re.match(phone_pattern, cleaned_phone):
             raise serializers.ValidationError("Geçerli bir telefon numarası giriniz!")
         return cleaned_phone
+    
+class SellerSerializer(serializers.ModelSerializer):
+    user_username = serializers.CharField(source='user.username', read_only=True)
+    total_books = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Seller
+        fields = ['id', 'user', 'user_username', 'store_name', 'description', 
+                 'phone', 'address', 'is_approved', 'created_at', 'total_books']
+        read_only_fields = ['user', 'created_at', 'is_approved']
+    
+    def get_total_books(self, obj):
+        return obj.books.filter(is_active=True).count()
+
+class CreateSellerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Seller
+        fields = ['store_name', 'description', 'phone', 'address']
+
+class CreateBookSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Book
+        fields = ['title', 'author', 'price', 'description', 'stock']
+        
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Fiyat 0'dan büyük olmalıdır!")
+        return value
+    
+    def validate_stock(self, value):
+        if value < 0:
+            raise serializers.ValidationError("Stok negatif olamaz!")
+        return value
+
+# Mevcut BookSerializer'ı güncelle
+class BookSerializer(serializers.ModelSerializer):
+    seller_name = serializers.CharField(source='seller.store_name', read_only=True)
+    seller_id = serializers.IntegerField(source='seller.id', read_only=True)
+    
+    class Meta:
+        model = Book
+        fields = '__all__'    

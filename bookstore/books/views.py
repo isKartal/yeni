@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Book, Order, OrderItem
-from .serializers import BookSerializer
+from .models import Book, Order, OrderItem, Seller
+from .serializers import BookSerializer, SellerSerializer, CreateSellerSerializer, CreateBookSerializer
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -172,18 +172,7 @@ def create_order(request):
 @permission_classes([IsAuthenticated])
 def user_orders(request):
     """Kullanıcının siparişleri"""
-    print(f"DEBUG - Giriş yapan kullanıcı: {request.user}")
-    print(f"DEBUG - Kullanıcı ID: {request.user.id}")
-    
     orders = Order.objects.filter(user=request.user)
-    print(f"DEBUG - Bulunan sipariş sayısı: {orders.count()}")
-    
-    # Tüm siparişleri listele
-    all_orders = Order.objects.all()
-    print(f"DEBUG - Sistemdeki toplam sipariş sayısı: {all_orders.count()}")
-    for order in all_orders:
-        print(f"DEBUG - Sipariş {order.id}: Kullanıcı {order.user} (ID: {order.user.id})")
-    
     serializer = OrderSerializer(orders, many=True)
     return Response(serializer.data)
 
@@ -247,3 +236,96 @@ def order_status(request, pk):
         })
     except Order.DoesNotExist:
         return Response({'error': 'Sipariş bulunamadı!'}, status=404)
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def become_seller(request):
+    """Satıcı ol"""
+    # Zaten satıcı mı kontrol et
+    if hasattr(request.user, 'seller_profile'):
+        return Response({'error': 'Zaten bir satıcı hesabınız var!'}, status=400)
+    
+    serializer = CreateSellerSerializer(data=request.data)
+    if serializer.is_valid():
+        seller = serializer.save(user=request.user)
+        return Response({
+            'message': 'Satıcı hesabınız başarıyla oluşturuldu!',
+            'seller': SellerSerializer(seller).data
+        }, status=201)
+    return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def seller_profile(request):
+    """Satıcı profili"""
+    try:
+        seller = request.user.seller_profile
+        return Response(SellerSerializer(seller).data)
+    except Seller.DoesNotExist:
+        return Response({'error': 'Satıcı hesabınız bulunamadı!'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_book(request):
+    """Satıcı ürün ekle"""
+    try:
+        seller = request.user.seller_profile
+    except Seller.DoesNotExist:
+        return Response({'error': 'Önce satıcı hesabı oluşturmalısınız!'}, status=400)
+    
+    serializer = CreateBookSerializer(data=request.data)
+    if serializer.is_valid():
+        book = serializer.save(seller=seller)
+        return Response({
+            'message': 'Ürün başarıyla eklendi!',
+            'book': BookSerializer(book).data
+        }, status=201)
+    return Response(serializer.errors, status=400)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_books(request):
+    """Satıcının ürünleri"""
+    try:
+        seller = request.user.seller_profile
+        books = Book.objects.filter(seller=seller, is_active=True)
+        serializer = BookSerializer(books, many=True)
+        return Response(serializer.data)
+    except Seller.DoesNotExist:
+        return Response({'error': 'Satıcı hesabınız bulunamadı!'}, status=404)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_book(request, pk):
+    """Ürün güncelle"""
+    try:
+        seller = request.user.seller_profile
+        book = Book.objects.get(pk=pk, seller=seller)
+    except Seller.DoesNotExist:
+        return Response({'error': 'Satıcı hesabınız bulunamadı!'}, status=404)
+    except Book.DoesNotExist:
+        return Response({'error': 'Ürün bulunamadı!'}, status=404)
+    
+    serializer = CreateBookSerializer(book, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'message': 'Ürün başarıyla güncellendi!',
+            'book': BookSerializer(book).data
+        })
+    return Response(serializer.errors, status=400)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_book(request, pk):
+    """Ürün sil (pasif yap)"""
+    try:
+        seller = request.user.seller_profile
+        book = Book.objects.get(pk=pk, seller=seller)
+        book.is_active = False
+        book.save()
+        return Response({'message': 'Ürün başarıyla silindi!'})
+    except Seller.DoesNotExist:
+        return Response({'error': 'Satıcı hesabınız bulunamadı!'}, status=404)
+    except Book.DoesNotExist:
+        return Response({'error': 'Ürün bulunamadı!'}, status=404)    

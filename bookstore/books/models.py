@@ -9,8 +9,15 @@ class Book(models.Model):
     stock = models.IntegerField(default=0)  # Stok
     created_at = models.DateTimeField(auto_now_add=True)  # Tarih
     
+    # YENİ: Satıcı bilgisi eklendi
+    seller = models.ForeignKey('Seller', on_delete=models.CASCADE, related_name='books', null=True, blank=True)
+    is_active = models.BooleanField(default=True)  # Ürün aktif mi?
+    
     def __str__(self):
         return self.title  # Admin panelde kitap adını göster
+    
+    class Meta:
+        ordering = ['-created_at']
     
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -49,3 +56,19 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.quantity * self.price
+    
+class Seller(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='seller_profile')
+    store_name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    phone = models.CharField(max_length=20)
+    address = models.TextField()
+    is_approved = models.BooleanField(default=True)  # Basit sistem için otomatik onay
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.store_name} - {self.user.username}"
+    
+    class Meta:
+        verbose_name = "Satıcı"
+        verbose_name_plural = "Satıcılar"    
