@@ -1,121 +1,288 @@
-body {
-    font-family: Arial, sans-serif;
+/* Genel Stiller */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f5f5f5;
+    box-sizing: border-box;
 }
 
-header {
-    background-color: #333;
-    color: white;
-    padding: 1rem;
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+    min-height: 100vh;
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+}
+
+main {
+    flex: 1;
+    padding-bottom: 60px;
+}
+
+/* Header Stiller */
+header {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+header h1 {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-links a:hover {
+    background-color: rgba(255,255,255,0.2);
+    transform: translateY(-2px);
 }
 
 #cart-count {
-    background-color: #4CAF50;
-    padding: 0.5rem 1rem;
-    border-radius: 5px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    padding: 8px 16px;
+    border-radius: 20px;
     cursor: pointer;
+    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+#cart-count:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+#user-info {
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#user-info a {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+/* Responsive Header */
+@media (max-width: 768px) {
+    header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .nav-links {
+        justify-content: center;
+        gap: 15px;
+    }
+}
+
+/* Kitap Container */
 #books-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 25px;
+    padding: 30px 20px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
+/* Kitap Kartları */
 .book-card {
     background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+    position: relative;
+    overflow: hidden;
+}
+
+.book-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(45deg, #4CAF50, #2196F3);
 }
 
 .book-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
 }
 
 .book-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    font-weight: bold;
     margin-bottom: 10px;
-    color: #333;
+    color: #2c3e50;
+    line-height: 1.3;
 }
 
 .book-author {
-    color: #666;
-    margin-bottom: 10px;
+    color: #7f8c8d;
+    margin-bottom: 15px;
+    font-style: italic;
+    font-size: 1rem;
 }
 
 .book-price {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     color: #4CAF50;
     font-weight: bold;
     margin-bottom: 15px;
 }
 
+.book-card p {
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
 .add-to-cart-btn {
-    background-color: #4CAF50;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    padding: 12px 24px;
+    border-radius: 25px;
     cursor: pointer;
     font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    width: 100%;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
 }
 
 .add-to-cart-btn:hover {
-    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
 }
 
+.add-to-cart-btn:active {
+    transform: translateY(0);
+}
+
+/* Sepet Bölümü */
 #cart-section {
     padding: 20px;
+}
+
+.cart-container {
+    max-width: 800px;
+    margin: 0 auto;
     background: white;
-    margin: 20px;
-    border-radius: 8px;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.cart-container h2 {
+    color: #2c3e50;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 2rem;
 }
 
 .cart-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+    padding: 20px;
+    border-bottom: 1px solid #ecf0f1;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    border-radius: 10px;
+}
+
+.cart-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.cart-item button {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cart-item button:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
 }
 
 #cart-total {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: bold;
-    text-align: right;
-    padding: 20px;
+    text-align: center;
+    padding: 25px;
     color: #4CAF50;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.cart-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
 }
 
 /* Auth Bölümü */
 .auth-container {
-    max-width: 400px;
+    max-width: 450px;
     margin: 50px auto;
     background: white;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .auth-tabs {
     display: flex;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .tab-btn {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    background: #f5f5f5;
+    padding: 15px;
+    border: none;
+    background: #ecf0f1;
     cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
 }
 
 .tab-btn.active {
@@ -123,43 +290,933 @@ header {
     color: white;
 }
 
+.tab-btn:hover:not(.active) {
+    background: #d5dbdb;
+}
+
 .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.auth-form h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #2c3e50;
+    font-size: 1.8rem;
+}
+
+.auth-form input {
+    padding: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.auth-form button {
+    padding: 15px;
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.auth-form button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+/* Sipariş Bölümü */
+.checkout-container, .orders-container {
+    max-width: 900px;
+    margin: 30px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.checkout-container h2, .orders-container h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 2.2rem;
+}
+
+.checkout-summary {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 1px solid #dee2e6;
+}
+
+.checkout-summary h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+}
+
+.checkout-item, .order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.checkout-item:last-child, .order-item:last-child {
+    border-bottom: none;
+}
+
+#checkout-total {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4CAF50;
+    text-align: right;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px solid #4CAF50;
+}
+
+.checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.checkout-form h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+}
+
+.checkout-form textarea,
+.checkout-form input {
+    padding: 15px;
+    border: 2px solid #ecf0f1;
+    border-radius: 10px;
+    font-size: 16px;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    resize: vertical;
+}
+
+.checkout-form textarea:focus,
+.checkout-form input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* Butonlar */
+.checkout-btn, .continue-btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.checkout-btn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+    box-shadow: 0 3px 10px rgba(76, 175, 80, 0.3);
+}
+
+.checkout-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+}
+
+.continue-btn {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
+    color: white;
+    box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
+}
+
+.continue-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+}
+
+/* Sipariş Kartları */
+.orders-actions {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.order-card {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 12px;
+    border-left: 5px solid #4CAF50;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.order-header h3 {
+    color: #2c3e50;
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.order-status {
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending { background: #ff9800; color: white; }
+.status-confirmed { background: #2196F3; color: white; }
+.status-shipped { background: #9C27B0; color: white; }
+.status-delivered { background: #4CAF50; color: white; }
+.status-cancelled { background: #f44336; color: white; }
+
+.order-info, .order-address {
+    margin-bottom: 20px;
+}
+
+.order-info p, .order-address p {
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.order-items {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.order-items h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+/* Footer */
+footer {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 25px 20px;
+    text-align: center;
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.footer-links {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.footer-links a {
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.footer-links a:hover {
+    color: #4CAF50;
+    background: rgba(255,255,255,0.1);
+}
+
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    .auth-container, .checkout-container, .orders-container {
+        margin: 20px;
+        padding: 25px;
+    }
+    
+    .cart-container {
+        margin: 20px;
+        padding: 20px;
+    }
+    
+    #books-container {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        padding: 20px 15px;
+    }
+    
+    .cart-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .form-actions, .cart-actions {
+        flex-direction: column;
+    }
+    
+    .checkout-btn, .continue-btn {
+        width: 100%;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .footer-links {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.4rem;
+    }
+    
+    .nav-links {
+        gap: 10px;
+    }
+    
+    .nav-links a {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+    
+    #books-container {
+        grid-template-columns: 1fr;
+        padding: 15px 10px;
+    }
+    
+    .book-card {
+        padding: 20px;
+    }
+    
+    .book-title {
+        font-size: 1.2rem;
+    }
+}
+
+/* Loading ve Error Durumları */
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.error {
+    text-align: center;
+    padding: 50px;
+    color: #e74c3c;
+    font-size: 1.1rem;
+}
+
+/* Scroll Bar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #45a049, #4CAF50);
+}
+
+/* Sipariş aksiyonları */
+.order-actions {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.cancel-btn {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(244, 67, 54, 0.3);
+}
+
+.no-orders {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    padding: 50px;
+}
+
+/* Form loading durumu */
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Loading ve durumlar */
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    font-style: italic;
+}
+
+.loading::after {
+    content: '...';
+    animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+/* Fade in animasyonu */
+.order-card, .book-card {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Section geçişleri */
+main > div {
+    transition: opacity 0.2s ease-in-out;
+}
+
+/* Profil Sayfası */
+.profile-container {
+    max-width: 800px;
+    margin: 30px auto;
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.profile-container h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    text-align: center;
+    font-size: 2.2rem;
+}
+
+.profile-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+.user-details {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 12px;
+    border-left: 4px solid #4CAF50;
+}
+
+.user-details h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item label {
+    font-weight: bold;
+    color: #555;
+}
+
+.detail-item span {
+    color: #2c3e50;
+}
+
+.status-active {
+    color: #4CAF50 !important;
+    font-weight: bold;
+}
+
+.profile-actions {
     display: flex;
     flex-direction: column;
     gap: 15px;
 }
 
-.auth-form h2 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.auth-form input {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-.auth-form button {
-    padding: 12px;
-    background: #4CAF50;
-    color: white;
+.profile-btn {
+    padding: 15px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.auth-form button:hover {
-    background: #45a049;
-}
-
-#user-info {
+.orders-btn {
+    background: linear-gradient(45deg, #2196F3, #1976D2);
     color: white;
 }
 
-#user-info a {
+.cart-btn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.browse-btn {
+    background: linear-gradient(45deg, #FF9800, #F57C00);
+    color: white;
+}
+
+.logout-btn {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    color: white;
+}
+
+.profile-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Responsive profil */
+@media (max-width: 768px) {
+    .profile-info {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+    
+    .profile-container {
+        margin: 20px;
+        padding: 25px;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* Footer link geçişleri */
+.footer-links a {
+    transition: all 0.3s ease;
+}
+
+.footer-links a.active {
     color: #4CAF50;
-    margin-left: 10px;
+    font-weight: bold;
+}
+
+/* Sepet Miktar Kontrolleri */
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ecf0f1;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-price {
+    color: #4CAF50;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    padding: 5px;
+}
+
+.quantity-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plus-btn {
+    background: #4CAF50;
+    color: white;
+}
+
+.minus-btn {
+    background: #f44336;
+    color: white;
+}
+
+.quantity-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.quantity-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.quantity-display {
+    min-width: 30px;
+    text-align: center;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.item-total {
+    font-weight: bold;
+    color: #2c3e50;
+    min-width: 80px;
+    text-align: right;
+}
+
+.remove-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.remove-btn:hover {
+    background: #c0392b;
+    transform: scale(1.05);
+}
+
+/* Stok Uyarıları */
+.stock-warning, .stock-info {
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.out-of-stock {
+    background: #ffebee;
+    color: #c62828;
+    border: 2px solid #ef5350;
+}
+
+.low-stock {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 2px solid #ff9800;
+    animation: pulse 2s infinite;
+}
+
+.stock-info {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 2px solid #4caf50;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Stokta Olmayan Kitap Kartları */
+.out-of-stock-card {
+    opacity: 0.6;
+    position: relative;
+    background: #f5f5f5;
+}
+
+.out-of-stock-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: #f44336;
+}
+
+.add-to-cart-btn.disabled {
+    background: #bdbdbd !important;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.add-to-cart-btn.disabled:hover {
+    box-shadow: none !important;
+}
+
+/* Responsive Sepet */
+@media (max-width: 768px) {
+    .cart-item {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .cart-item-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .quantity-controls {
+        order: 1;
+    }
+    
+    .item-total {
+        order: 2;
+        font-size: 1.1rem;
+    }
+    
+    .remove-btn {
+        order: 3;
+    }
+}
+
+/* Acil Stok Uyarıları */
+.very-low-stock {
+    background: linear-gradient(45deg, #ff5722, #f44336);
+    color: white;
+    border: none;
+    animation: urgentPulse 1.5s infinite;
+    box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+}
+
+@keyframes urgentPulse {
+    0% { 
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 87, 34, 0.8);
+    }
+    100% { 
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+    }
+}
+
+/* Acil Stok Kartları */
+.urgent-stock-card {
+    border: 2px solid #ff5722;
+    box-shadow: 0 0 15px rgba(255, 87, 34, 0.3);
+    animation: cardPulse 3s infinite;
+}
+
+@keyframes cardPulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+}
+
+/* Acil Buton */
+.add-to-cart-btn.urgent {
+    background: linear-gradient(45deg, #ff5722, #f44336);
+    animation: buttonGlow 2s infinite;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+@keyframes buttonGlow {
+    0%, 100% { 
+        box-shadow: 0 3px 10px rgba(255, 87, 34, 0.4);
+    }
+    50% { 
+        box-shadow: 0 5px 20px rgba(255, 87, 34, 0.8);
+    }
+}
+
+/* Güncellenen Low Stock */
+.low-stock {
+    background: linear-gradient(45deg, #ff9800, #f57c00);
+    color: white;
+    border: none;
+    animation: pulse 3s infinite;
+}
+
+/* Stock Info Güncelleme */
+.stock-info {
+    background: linear-gradient(45deg, #4caf50, #45a049);
+    color: white;
+    border: none;
+}
+
+/* Sipariş İptal Buton Stilleri */
+.order-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #e9ecef;
+    text-align: center;
+}
+
+.cancel-btn {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(244, 67, 54, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cancel-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+    background: linear-gradient(45deg, #d32f2f, #b71c1c);
+}
+
+.cancel-btn:active {
+    transform: translateY(0);
+}
+
+.cancel-note {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-style: italic;
+}
+
+.no-cancel-info {
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    margin: 0;
+}
+
+.retry-btn {
+    background: #2196F3;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.retry-btn:hover {
+    background: #1976D2;
+}
+
+.error {
+    color: #f44336;
+    font-weight: bold;
 }

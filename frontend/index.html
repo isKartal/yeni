@@ -10,14 +10,17 @@
     <header>
         <h1>📚 Kitap Mağazası</h1>
         <div class="nav-links">
-    <a href="#" onclick="showBooks()">Ürünler</a>
-    <a href="#" onclick="showCart()">Sepet</a>
-    <span id="user-info" style="display: none;">
-        <span id="username"></span>
-        <a href="#" onclick="logout()">Çıkış</a>
-    </span>
-    <a href="#" id="login-link" onclick="showLogin()">Giriş</a>
-</div>
+            <a href="#" onclick="showBooks()">Ürünler</a>
+            <a href="#" onclick="showCart()">
+                <span id="cart-count">Sepet (0)</span>
+            </a>
+            <span id="user-info" style="display: none;">
+                <span id="username"></span>
+                <a href="#" onclick="showOrders()">Siparişlerim</a>
+                <a href="#" onclick="logout()">Çıkış</a>
+            </span>
+            <a href="#" id="login-link" onclick="showLogin()">Giriş</a>
+        </div>
     </header>
 
     <main>
@@ -28,39 +31,94 @@
 
         <!-- Sepet -->
         <div id="cart-section" style="display: none;">
-            <h2>Sepetiniz</h2>
-            <div id="cart-items"></div>
-            <div id="cart-total">Toplam: 0 TL</div>
-        </div>
-         <div id="auth-section" style="display: none;">
-        <div class="auth-container">
-            <div class="auth-tabs">
-                <button class="tab-btn active" onclick="showLoginForm()">Giriş</button>
-                <button class="tab-btn" onclick="showRegisterForm()">Kayıt</button>
+            <div class="cart-container">
+                <h2>Sepetiniz</h2>
+                <div id="cart-items"></div>
+                <div id="cart-total">Toplam: 0 TL</div>
+                <div class="cart-actions">
+                    <button onclick="showCheckout()" class="checkout-btn">Sipariş Ver</button>
+                    <button onclick="showBooks()" class="continue-btn">Alışverişe Devam</button>
+                </div>
             </div>
-            
-            <!-- Giriş Formu -->
-            <form id="login-form" class="auth-form">
-                <h2>Giriş Yap</h2>
-                <input type="text" id="login-username" placeholder="Kullanıcı Adı" required>
-                <input type="password" id="login-password" placeholder="Şifre" required>
-                <button type="submit">Giriş Yap</button>
-            </form>
-            
-            <!-- Kayıt Formu -->
-            <form id="register-form" class="auth-form" style="display: none;">
-                <h2>Kayıt Ol</h2>
-                <input type="text" id="register-username" placeholder="Kullanıcı Adı" required>
-                <input type="email" id="register-email" placeholder="Email" required>
-                <input type="text" id="register-firstname" placeholder="Ad">
-                <input type="text" id="register-lastname" placeholder="Soyad">
-                <input type="password" id="register-password" placeholder="Şifre" required>
-                <input type="password" id="register-password-confirm" placeholder="Şifre Tekrar" required>
-                <button type="submit">Kayıt Ol</button>
-            </form>
         </div>
-    </div>
+
+        <!-- Giriş/Kayıt Formu -->
+        <div id="auth-section" style="display: none;">
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="tab-btn active" onclick="showLoginForm()">Giriş</button>
+                    <button class="tab-btn" onclick="showRegisterForm()">Kayıt</button>
+                </div>
+                
+                <!-- Giriş Formu -->
+                <form id="login-form" class="auth-form">
+                    <h2>Giriş Yap</h2>
+                    <input type="text" id="login-username" placeholder="Kullanıcı Adı" required>
+                    <input type="password" id="login-password" placeholder="Şifre" required>
+                    <button type="submit">Giriş Yap</button>
+                </form>
+                
+                <!-- Kayıt Formu -->
+                <form id="register-form" class="auth-form" style="display: none;">
+                    <h2>Kayıt Ol</h2>
+                    <input type="text" id="register-username" placeholder="Kullanıcı Adı" required>
+                    <input type="email" id="register-email" placeholder="Email" required>
+                    <input type="text" id="register-firstname" placeholder="Ad">
+                    <input type="text" id="register-lastname" placeholder="Soyad">
+                    <input type="password" id="register-password" placeholder="Şifre" required>
+                    <input type="password" id="register-password-confirm" placeholder="Şifre Tekrar" required>
+                    <button type="submit">Kayıt Ol</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sipariş Formu -->
+        <div id="checkout-section" style="display: none;">
+            <div class="checkout-container">
+                <h2>Sipariş Ver</h2>
+                <div class="checkout-summary">
+                    <h3>Sipariş Özeti</h3>
+                    <div id="checkout-items"></div>
+                    <div id="checkout-total"></div>
+                </div>
+                
+                <form id="checkout-form" class="checkout-form">
+                    <h3>Teslimat Bilgileri</h3>
+                    <textarea id="shipping-address" placeholder="Teslimat Adresi (Mahalle, Sokak, Bina No, Daire No, İlçe, İl)" required rows="4"></textarea>
+                    <input type="tel" id="phone" placeholder="Telefon Numarası (örn: 0555 123 45 67)" required>
+                    <div class="form-actions">
+                        <button type="submit" class="checkout-btn">Siparişi Tamamla</button>
+                        <button type="button" onclick="showCart()" class="continue-btn">Sepete Dön</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Siparişlerim -->
+        <div id="orders-section" style="display: none;">
+            <div class="orders-container">
+                <h2>Siparişlerim</h2>
+                <div class="orders-actions">
+                    <button onclick="showBooks()" class="continue-btn">Alışverişe Devam</button>
+                </div>
+                <div id="orders-list">
+                    <p>Siparişler yükleniyor...</p>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 Kitap Mağazası. Tüm hakları saklıdır.</p>
+            <div class="footer-links">
+                <a href="#" onclick="showBooks()">Ana Sayfa</a>
+                <a href="#" id="footer-account-link" onclick="handleAccountClick()">Hesabım</a>
+                <a href="#" onclick="showCart()">Sepetim</a>
+            </div>
+        </div>
+    </footer>
 
     <script src="script.js"></script>
 </body>
